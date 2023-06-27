@@ -72,16 +72,14 @@ def grabclipboard():
     if sys.platform == "darwin":
         fh, filepath = tempfile.mkstemp(".jpg")
         os.close(fh)
+        script = ["osascript"]
         commands = [
-            'set theFile to (open for access POSIX file "'
-            + filepath
-            + '" with write permission)',
+            f'set theFile to (open for access POSIX file "{filepath}" with write permission)',
             "try",
             "    write (the clipboard as JPEG picture) to theFile",
             "end try",
             "close access theFile",
         ]
-        script = ["osascript"]
         for command in commands:
             script += ["-e", command]
         subprocess.call(script)
@@ -98,10 +96,11 @@ def grabclipboard():
             import struct
 
             o = struct.unpack_from("I", data)[0]
-            if data[16] != 0:
-                files = data[o:].decode("utf-16le").split("\0")
-            else:
-                files = data[o:].decode("mbcs").split("\0")
+            files = (
+                data[o:].decode("utf-16le").split("\0")
+                if data[16] != 0
+                else data[o:].decode("mbcs").split("\0")
+            )
             return files[: files.index("")]
         if isinstance(data, bytes):
             import io

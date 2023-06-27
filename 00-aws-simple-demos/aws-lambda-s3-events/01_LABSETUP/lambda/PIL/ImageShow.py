@@ -51,10 +51,14 @@ def show(image, title=None, **options):
     :param \**options: Additional viewer options.
     :returns: ``True`` if a suitable viewer was found, ``False`` otherwise.
     """
-    for viewer in _viewers:
-        if viewer.show(image, title=title, **options):
-            return 1
-    return 0
+    return next(
+        (
+            1
+            for viewer in _viewers
+            if viewer.show(image, title=title, **options)
+        ),
+        0,
+    )
 
 
 class Viewer:
@@ -151,8 +155,7 @@ class MacViewer(Viewer):
         # on darwin open returns immediately resulting in the temp
         # file removal while app is opening
         command = "open -a Preview.app"
-        command = f"({command} {quote(file)}; sleep 20; rm -f {quote(file)})&"
-        return command
+        return f"({command} {quote(file)}; sleep 20; rm -f {quote(file)})&"
 
     def show_file(self, file, **options):
         """Display given file"""
