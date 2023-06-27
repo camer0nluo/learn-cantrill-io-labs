@@ -66,10 +66,7 @@ class ImageDraw:
                 blend = 1
             else:
                 raise ValueError("mode mismatch")
-        if mode == "P":
-            self.palette = im.palette
-        else:
-            self.palette = None
+        self.palette = im.palette if mode == "P" else None
         self._image = im
         self.im = im.im
         self.draw = Image.core.draw(self.im, blend)
@@ -78,11 +75,7 @@ class ImageDraw:
             self.ink = self.draw.draw_ink(1)
         else:
             self.ink = self.draw.draw_ink(-1)
-        if mode in ("1", "P", "I", "F"):
-            # FIXME: fix Fill2 to properly support matte for I+F images
-            self.fontmode = "1"
-        else:
-            self.fontmode = "L"  # aliasing is okay for other modes
+        self.fontmode = "1" if mode in ("1", "P", "I", "F") else "L"
         self.fill = 0
         self.font = None
 
@@ -415,9 +408,7 @@ class ImageDraw:
 
         def getink(fill):
             ink, fill = self._getink(fill)
-            if ink is None:
-                return fill
-            return ink
+            return fill if ink is None else ink
 
         def draw_text(ink, stroke_width=0, stroke_offset=None):
             mode = self.fontmode
@@ -628,9 +619,7 @@ class ImageDraw:
             size = self.textsize(
                 text, font, direction=direction, features=features, language=language
             )
-            if direction == "ttb":
-                return size[1]
-            return size[0]
+            return size[1] if direction == "ttb" else size[0]
 
     def textbbox(
         self,
@@ -768,9 +757,7 @@ class ImageDraw:
 
             top += line_spacing
 
-        if bbox is None:
-            return xy[0], xy[1], xy[0], xy[1]
-        return bbox
+        return (xy[0], xy[1], xy[0], xy[1]) if bbox is None else bbox
 
 
 def Draw(im, mode=None):
@@ -869,7 +856,7 @@ def floodfill(image, xy, value, border=None, thresh=0):
                     if border is None:
                         fill = _color_diff(p, background) <= thresh
                     else:
-                        fill = p != value and p != border
+                        fill = p not in [value, border]
                     if fill:
                         pixel[s, t] = value
                         new_edge.add((s, t))
@@ -940,7 +927,7 @@ def _compute_regular_polygon_vertices(bounding_circle, n_sides, rotation):
     if not all(isinstance(i, (int, float)) for i in (*centroid, polygon_radius)):
         raise ValueError("bounding_circle should only contain numeric data")
 
-    if not len(centroid) == 2:
+    if len(centroid) != 2:
         raise ValueError(
             "bounding_circle centre should contain 2D coordinates (e.g. (x, y))"
         )
